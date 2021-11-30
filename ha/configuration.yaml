@@ -1,0 +1,89 @@
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+weather:
+  - platform: met
+
+sensor:
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+      - 'date_time'
+      - 'date_time_utc'
+      - 'date_time_iso'
+      - 'time_date'
+      - 'time_utc'
+      - 'beat'
+
+sensor:
+  - platform: template
+    sensors:
+      temp_now:
+        value_template: "{{ state_attr('weather.met_no','temperature') | default('0') }}"
+        friendly_name: Current temperature
+      temp_humid:
+        value_template: "{{ state_attr('weather.met_no','humidity') | default('0') }}"
+        friendly_name: Current humidity 
+      temp_pressure:
+        value_template: "{{ state_attr('weather.met_no','pressure') | default('0') }}"
+        friendly_name: Current pressure
+      temp_wind_speed:
+        value_template: "{{ state_attr('weather.met_no','wind_speed') | default('0') }}"
+        friendly_name: Current wind speed
+      temp_wind_bearing:
+        value_template: "{{ state_attr('weather.met_no','wind_bearing') | default('0') }}"
+        friendly_name: Current wind bearing in degree
+      today_icon:
+      # Below is for use with the weather-icons.ttf font found here; https://github.com/NamasteJasutin/esphome_weatherdisplay
+        value_template: >-
+          {% if states('weather.met_no') == 'clear-night' %}
+            a
+          {% elif states('weather.met_no') == 'sunny' %}
+            a
+          {% elif states('weather.met_no') == 'cloudy' %}
+            C
+          {% elif states('weather.met_no') == 'fog' %}
+            b
+          {% elif states('weather.met_no') == 'hail' %}
+            W
+          {% elif states('weather.met_no') == 'lightning' %}
+            Y
+          {% elif states('weather.met_no') == 'lightning-rainy' %}
+            R
+          {% elif states('weather.met_no') == 'partlycloudy' %}
+            A
+          {% elif states('weather.met_no') == 'pouring' %}
+            J
+          {% elif states('weather.met_no') == 'rainy' %}
+            F
+          {% elif states('weather.met_no') == 'snowy' %}
+            I
+          {% elif states('weather.met_no') == 'snowy-rainy' %}
+            W
+          {% elif states('weather.met_no') == 'windy' %}
+            b
+          {% elif states('weather.met_no') == 'windy-variant' %}
+            d
+          {% else %}
+            Q
+          {% endif %}
+        friendly_name: Today weather forecast
+      today_state:
+        value_template: "{{ states('weather.met_no').split('-')[0]|upper }}"
+        friendly_name: Today weather forecast state
+      sun_rise:
+        value_template: "{{ state_attr('sun.sun','next_rising').split('T')[1].split('.')[0].split(':')[0:2]|join(' :') | default('0:00') }}"
+        friendly_name: Next Sunrise
+      sun_set:
+        value_template: "{{ state_attr('sun.sun','next_setting').split('T')[1].split('.')[0].split(':')[0:2]|join(' :') | default('0:00') }}"
+        friendly_name: Next Sunset

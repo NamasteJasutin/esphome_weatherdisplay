@@ -1,0 +1,172 @@
+# https://github.com/bruxy70/Home-Assistant-ESPHome-Weather-Station << Idea from here
+esphome:
+  name: weatherdisplay
+  platform: ESP8266
+  board: d1_mini_pro
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: "Python1!"
+
+ota:
+  password: "Python1!"
+
+wifi:
+  ssid: "Thuis"
+  password: "1qaz2wsx3edc4"
+  fast_connect: true
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Weatherdisplay Fallback Hotspot"
+    password: "q7S2E0JUa8fl"
+
+captive_portal:
+
+# Enable Time
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+sensor:
+#  - platform: homeassistant   # Inside temperature
+#    id: temperature_inside
+#    entity_id: sensor.temperature_inside
+  - platform: homeassistant   # Temp_now
+    id: temp_now    
+    entity_id: sensor.temp_now
+  - platform: homeassistant   # temp_humid
+    id: temp_humid
+    entity_id: sensor.temp_humid
+  - platform: homeassistant   # temp_pressure
+    id: temp_pressure
+    entity_id: sensor.temp_pressure
+  - platform: homeassistant   # temp_wind_bearing
+    id: temp_wind_bearing
+    entity_id: sensor.temp_wind_bearing
+  - platform: homeassistant   # temp_wind_speed
+    id: temp_wind_speed
+    entity_id: sensor.temp_wind_speed
+    
+text_sensor:
+  - platform: homeassistant   # Forecast icon
+    id: today_icon
+    entity_id: sensor.today_icon
+  - platform: homeassistant   # Forecast icon
+    id: today_state
+    entity_id: sensor.today_state
+  - platform: homeassistant
+    id: sunrise
+    entity_id: sensor.sun_rise
+  - platform: homeassistant
+    id: sunset
+    entity_id: sensor.sun_set
+
+
+# Example configuration entry
+font:
+  - file: 'Digit.ttf'
+    id: font1
+    size: 12
+  - file: 'Digit.ttf'
+    id: mass
+    size: 60
+  - file: 'Digit.ttf'
+    id: big
+    size: 24
+  - file: 'weather-icons.ttf'
+    id: font2
+    size: 100
+  - file: 'weather-icons.ttf'
+    id: font3
+    size: 32
+  - file: 'weather-icons.ttf'
+    id: font4
+    size: 46
+
+spi:
+  clk_pin: D0
+  mosi_pin: D1
+
+globals:
+  - id: boot
+    type: bool
+    restore_value: no
+  
+    
+# The application logic is in Lambda (main)
+display:
+  - platform: waveshare_epaper
+    cs_pin: D2
+    dc_pin: D3
+    busy_pin: D4
+    reset_pin: D5
+    model: 1.54inv2
+    rotation: 90
+    full_update_every: 55
+    id: disp
+    lambda: |-
+          auto time = id(homeassistant_time).now();
+          it.fill(COLOR_ON);
+          it.fill(COLOR_ON);
+          it.fill(COLOR_ON);
+          it.fill(COLOR_OFF);
+          it.fill(COLOR_OFF);
+          it.fill(COLOR_OFF);
+          if (time.year < 2020) {
+            id(boot) = false;
+            it.print(50, 10, id(mass), "LOA");
+            it.print(50, 70, id(mass), "DIN");
+            it.print(50,130, id(mass), "G..");
+          }
+          // wait for temp to be available
+          if (time.year >= 2020 && id(boot) == false) {
+            id(boot) = true; 
+          }
+          if (id(boot) == true) {
+            // Date + Time
+            it.strftime(5, 2, id(big), "%d-%m-%Y %H :%M", time); // Date + Time
+            it.rectangle(0, 0, 200, 26); // Date + Time Frame
+            
+            // MASSIVE WEATHER ICON + State
+            // Left Frame
+            auto weathericon = id(today_icon).state.c_str();
+            it.printf(10, 5, id(font2), "%1s", weathericon); // MASSIVE Weather Icon
+            auto weatherstate = id(today_state).state.c_str();
+            it.printf(10, 97, id(big), "%s", weatherstate); // Weather State
+            
+            // Frames
+            it.rectangle(0, 25, 100, 100); // MWeather Frame
+            it.rectangle(100, 25, 100, 25); // Weather Frame 1
+            it.rectangle(100, 25, 35, 25); // Weather Sub Frame 1
+            it.rectangle(100, 50, 100, 25); // Weather Frame 2
+            it.rectangle(100, 50, 35, 25); // Weather Sub Frame 2
+            it.rectangle(100, 75, 100, 25); // Weather Frame 3
+            it.rectangle(100, 75, 35, 25); // Weather Sub Frame 3
+            it.rectangle(100, 100, 100, 25); // Weather Frame 4
+            it.rectangle(100, 100, 35, 25); // Weather Sub Frame 4
+            it.rectangle(0, 125, 100, 75); // Bottom Frame Left
+            it.rectangle(100, 125, 100, 75); // Bottom Frame Right
+            // Frame 1 
+            it.printf(106, 23, id(font3), "1"); // Sun Icon
+            it.printf(145, 28, id(big), "%.1f", id(temp_now).state); // Weather Temp
+            // Frame 2
+            it.printf(106, 44, id(font3), "M"); // Humid Icon
+            it.printf(145, 52, id(big), "%2.0f%%", id(temp_humid).state); // Weather Humid
+            // Frame 3
+            it.printf(108, 72, id(font3), "."); // Arrow Icon
+            it.printf(146, 78, id(big), "%3.0f", id(temp_wind_bearing).state); // Wind Bearing
+            it.circle(193, 81, 3); // Degree sign 
+            // Frame 4
+            it.printf(106, 97, id(font3), ","); // Wind Icon
+            it.printf(145, 103, id(big), "%3.0f", id(temp_wind_speed).state); // Wind Speed
+            // Bottom Frame
+            it.printf(32, 123, id(font4), "7"); // Sunrise Icon
+            it.printf(15, 166, id(big), "%1s", id(sunrise).state.c_str()); // Sunrise time
+            it.printf(131, 123, id(font4), "8"); // Sunset Icon
+            it.printf(117, 166, id(big), "%1s", id(sunset).state.c_str()); // Sunset time
+          }
+
