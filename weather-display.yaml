@@ -1,4 +1,14 @@
-# https://github.com/bruxy70/Home-Assistant-ESPHome-Weather-Station << Idea from here
+# NamasteJasutin
+# https://jasutin.site/ha/introduction-to-home-assistant-and-esphome-custom-sensors-and-displays-by-building-a-weather-display-on-e-paper-with-esp8266/
+
+#####################
+# Please setup your #
+# device using the  #
+#      WIZARD       #
+#   and skip ahead  #
+# to the next block #
+#####################
+
 esphome:
   name: weatherdisplay
   platform: ESP8266
@@ -9,32 +19,35 @@ logger:
 
 # Enable Home Assistant API
 api:
-  password: "Python1!"
+  password: "XXXXXXX"
 
 ota:
-  password: "Python1!"
+  password: "XXXXXXX"
 
 wifi:
-  ssid: "Thuis"
-  password: "1qaz2wsx3edc4"
+  ssid: "XXXXXXX"
+  password: "XXXXXXX"
   fast_connect: true
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Weatherdisplay Fallback Hotspot"
-    password: "q7S2E0JUa8fl"
+    password: "XXXXXXX"
 
 captive_portal:
+
+#####################
+#    You can copy   #
+# safely from below #
+#####################
 
 # Enable Time
 time:
   - platform: homeassistant
     id: homeassistant_time
 
+# To make use of these sensors, make sure you install the code in ./ha/configuration.yaml in Home Assistant and restart HA. 
 sensor:
-#  - platform: homeassistant   # Inside temperature
-#    id: temperature_inside
-#    entity_id: sensor.temperature_inside
   - platform: homeassistant   # Temp_now
     id: temp_now    
     entity_id: sensor.temp_now
@@ -55,18 +68,18 @@ text_sensor:
   - platform: homeassistant   # Forecast icon
     id: today_icon
     entity_id: sensor.today_icon
-  - platform: homeassistant   # Forecast icon
+  - platform: homeassistant   # Forecast state
     id: today_state
     entity_id: sensor.today_state
-  - platform: homeassistant
+  - platform: homeassistant # Sun rising time
     id: sunrise
     entity_id: sensor.sun_rise
-  - platform: homeassistant
+  - platform: homeassistant # Sun setting time
     id: sunset
     entity_id: sensor.sun_set
 
-
-# Example configuration entry
+# I'm using 2 fonts in multiple sizes.
+# You can find the fonts is ./config/*
 font:
   - file: 'Digit.ttf'
     id: font1
@@ -87,6 +100,7 @@ font:
     id: font4
     size: 46
 
+# Follow my tutorial on 
 spi:
   clk_pin: D0
   mosi_pin: D1
